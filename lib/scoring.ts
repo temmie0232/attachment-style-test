@@ -24,7 +24,52 @@ const LABELS: Record<ScoreKey, string> = {
   scD: "D（未解決）",
 };
 
-const mapping = mappingData as MappingSchema;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function parsePointMap(value: unknown, context: string): PointMap {
+  if (!isRecord(value)) {
+    throw new Error(`採点テーブル形式が不正です: ${context}`);
+  }
+
+  const parsed: PointMap = {};
+  for (const [key, rawAmount] of Object.entries(value)) {
+    if (!SCORE_KEYS.includes(key as ScoreKey)) {
+      throw new Error(`採点キーが不正です: ${context}.${key}`);
+    }
+    if (typeof rawAmount !== "number" || !Number.isFinite(rawAmount)) {
+      throw new Error(`加点値が不正です: ${context}.${key}`);
+    }
+    parsed[key as ScoreKey] = rawAmount;
+  }
+
+  return parsed;
+}
+
+function validateMappingSchema(raw: unknown): MappingSchema {
+  if (!isRecord(raw) || !isRecord(raw.questions)) {
+    throw new Error("採点テーブル全体の形式が不正です。");
+  }
+
+  const parsedQuestions: Record<string, QuestionRule> = {};
+  for (let questionId = 1; questionId <= TOTAL_QUESTIONS; questionId += 1) {
+    const key = String(questionId);
+    const ruleRaw = raw.questions[key];
+    if (!isRecord(ruleRaw)) {
+      throw new Error(`採点ルールがありません: ${key}`);
+    }
+
+    parsedQuestions[key] = {
+      answer1: parsePointMap(ruleRaw.answer1, `questions.${key}.answer1`),
+      answer2: parsePointMap(ruleRaw.answer2, `questions.${key}.answer2`),
+    };
+  }
+
+  return { questions: parsedQuestions };
+}
+
+const mapping = validateMappingSchema(mappingData);
 
 export function createEmptyScore(): Score {
   return { scA: 0, scB: 0, scC: 0, scD: 0 };
@@ -86,4 +131,3 @@ export function rankScoreKeys(score: Score): ScoreKey[] {
 export function labelForKey(key: ScoreKey): string {
   return LABELS[key];
 }
-

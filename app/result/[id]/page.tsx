@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { Score, ScoreKey, labelForKey, rankScoreKeys } from "@/lib/scoring";
 import { ensureSubmissionsSchema } from "@/lib/submissions-schema";
+import { formatDateTimeJst } from "@/lib/time";
 
 type SubmissionRow = {
   id: string;
@@ -104,7 +105,7 @@ export default async function ResultPage({
         <h1>診断結果</h1>
         <p className="badge">{row.name} の結果</p>
         <p className="muted">
-          表示日時: {new Date(row.viewed_at).toLocaleString("ja-JP")}（時間帯: {row.viewed_period}）
+          表示日時: {formatDateTimeJst(row.viewed_at)}（時間帯: {row.viewed_period}）
         </p>
 
         <p>

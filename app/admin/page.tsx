@@ -1,15 +1,9 @@
+import Link from "next/link";
 import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import questionsData from "@/data/questions.json";
 import { ensureSubmissionsSchema } from "@/lib/submissions-schema";
-
-type Question = {
-  id: number;
-  question: string;
-  answer1: string;
-  answer2: string;
-};
+import { formatDateTimeJst } from "@/lib/time";
 
 type SubmissionRow = {
   id: string;
@@ -23,36 +17,16 @@ type SubmissionRow = {
     scC?: number;
     scD?: number;
   } | null;
-  answers: Record<string, number> | null;
 };
 
 export const dynamic = "force-dynamic";
-const questions = questionsData as Question[];
-const questionById = new Map(questions.map((item) => [item.id, item]));
 const idSchema = z.string().uuid();
-
-function answerLabel(questionId: number, selectedValue: number | undefined): string {
-  const question = questionById.get(questionId);
-  if (!question) {
-    return selectedValue === 1 || selectedValue === 2 ? `選択肢${selectedValue}` : "未回答";
-  }
-
-  if (selectedValue === 1) {
-    return question.answer1;
-  }
-
-  if (selectedValue === 2) {
-    return question.answer2;
-  }
-
-  return "未回答";
-}
 
 async function getSubmissions() {
   await ensureSubmissionsSchema();
 
   const result = await sql<SubmissionRow>`
-    SELECT id, name, score, answers, created_at, viewed_at, viewed_period
+    SELECT id, name, score, created_at, viewed_at, viewed_period
     FROM attachment_submissions
     ORDER BY created_at DESC
     LIMIT 200
@@ -113,8 +87,8 @@ export default async function AdminPage() {
               )}
               {rows.map((row) => (
                 <tr key={row.id}>
-                  <td>{new Date(row.created_at).toLocaleString("ja-JP")}</td>
-                  <td>{new Date(row.viewed_at).toLocaleString("ja-JP")}</td>
+                  <td>{formatDateTimeJst(row.created_at)}</td>
+                  <td>{formatDateTimeJst(row.viewed_at)}</td>
                   <td>{row.viewed_period}</td>
                   <td>{row.name}</td>
                   <td>{row.score?.scA ?? 0}</td>
@@ -122,19 +96,9 @@ export default async function AdminPage() {
                   <td>{row.score?.scC ?? 0}</td>
                   <td>{row.score?.scD ?? 0}</td>
                   <td>
-                    <details className="answers-details">
-                      <summary>回答を見る</summary>
-                      <div className="answers-list">
-                        {questions.map((question) => (
-                          <article className="answer-item" key={`${row.id}-${question.id}`}>
-                            <p className="answer-item-head">
-                              Q{question.id}：{answerLabel(question.id, row.answers?.[String(question.id)])}
-                            </p>
-                            <p className="answer-item-question">{question.question}</p>
-                          </article>
-                        ))}
-                      </div>
-                    </details>
+                    <Link className="btn btn-secondary btn-small btn-inline" href={`/admin/${row.id}`}>
+                      詳細へ
+                    </Link>
                   </td>
                   <td>
                     <form action={deleteSubmission}>
