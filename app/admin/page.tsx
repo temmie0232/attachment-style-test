@@ -14,6 +14,8 @@ type SubmissionRow = {
   id: string;
   name: string;
   created_at: string;
+  viewed_at: string;
+  viewed_period: string;
   score: {
     scA?: number;
     scB?: number;
@@ -47,7 +49,7 @@ function answerLabel(questionId: number, selectedValue: number | undefined): str
 
 async function getSubmissions() {
   const result = await sql<SubmissionRow>`
-    SELECT id, name, score, answers, created_at
+    SELECT id, name, score, answers, created_at, viewed_at, viewed_period
     FROM attachment_submissions
     ORDER BY created_at DESC
     LIMIT 200
@@ -85,7 +87,9 @@ export default async function AdminPage() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>日時</th>
+                <th>保存日時</th>
+                <th>結果表示日時</th>
+                <th>時間帯</th>
                 <th>名前</th>
                 <th>A</th>
                 <th>B</th>
@@ -99,12 +103,14 @@ export default async function AdminPage() {
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={9}>データはまだありません。</td>
+                  <td colSpan={11}>データはまだありません。</td>
                 </tr>
               )}
               {rows.map((row) => (
                 <tr key={row.id}>
                   <td>{new Date(row.created_at).toLocaleString("ja-JP")}</td>
+                  <td>{new Date(row.viewed_at).toLocaleString("ja-JP")}</td>
+                  <td>{row.viewed_period}</td>
                   <td>{row.name}</td>
                   <td>{row.score?.scA ?? 0}</td>
                   <td>{row.score?.scB ?? 0}</td>

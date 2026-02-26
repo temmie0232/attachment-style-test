@@ -16,7 +16,30 @@ const payloadSchema = z.object({
 type InsertedRow = {
   id: string;
   created_at: string;
+  viewed_at: string;
+  viewed_period: string;
 };
+
+function viewedPeriodForDate(date: Date): string {
+  const tokyoHour = Number(
+    new Intl.DateTimeFormat("ja-JP", {
+      hour: "2-digit",
+      hourCycle: "h23",
+      timeZone: "Asia/Tokyo",
+    }).format(date),
+  );
+
+  if (tokyoHour >= 5 && tokyoHour < 11) {
+    return "朝";
+  }
+  if (tokyoHour >= 11 && tokyoHour < 17) {
+    return "昼";
+  }
+  if (tokyoHour >= 17 && tokyoHour < 22) {
+    return "夕方〜夜";
+  }
+  return "深夜";
+}
 
 export async function POST(request: Request) {
   try {
@@ -39,15 +62,19 @@ export async function POST(request: Request) {
     const answersForStorage = Object.fromEntries(
       Object.entries(normalizedAnswers).map(([key, value]) => [String(key), value]),
     );
+    const viewedAt = new Date();
+    const viewedPeriod = viewedPeriodForDate(viewedAt);
 
     const insertResult = await sql<InsertedRow>`
-      INSERT INTO attachment_submissions (name, answers, score)
+      INSERT INTO attachment_submissions (name, answers, score, viewed_at, viewed_period)
       VALUES (
         ${parsed.data.name},
         ${JSON.stringify(answersForStorage)}::jsonb,
-        ${JSON.stringify(score)}::jsonb
+        ${JSON.stringify(score)}::jsonb,
+        ${viewedAt.toISOString()}::timestamptz,
+        ${viewedPeriod}
       )
-      RETURNING id, created_at
+      RETURNING id, created_at, viewed_at, viewed_period
     `;
 
     const row = insertResult.rows[0];
@@ -55,6 +82,8 @@ export async function POST(request: Request) {
       ok: true,
       id: row.id,
       createdAt: row.created_at,
+      viewedAt: row.viewed_at,
+      viewedPeriod: row.viewed_period,
       score,
     });
   } catch (error) {
