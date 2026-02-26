@@ -1,5 +1,13 @@
 :root {
   color-scheme: light;
+  --duo-green: #58cc02;
+  --duo-green-deep: #46a302;
+  --duo-green-soft: #eff9e8;
+  --duo-blue: #1cb0f6;
+  --ink: #273044;
+  --muted: #61708f;
+  --card: #ffffff;
+  --line: #d9e2f2;
 }
 
 * {
@@ -8,13 +16,15 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-  background: #f5f7fc;
-  color: #1b1f28;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 0% 0%, #f2ffe6 0%, #ecf7ff 34%, #f7f9fc 72%),
+    #f7f9fc;
 }
 
 a {
-  color: #2448d8;
+  color: #1277c6;
   text-decoration: none;
 }
 
@@ -23,17 +33,17 @@ a:hover {
 }
 
 .main {
-  max-width: 920px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 24px 16px 72px;
+  padding: 28px 16px 84px;
 }
 
 .card {
-  background: #ffffff;
-  border: 1px solid #dde3ee;
-  border-radius: 12px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.05);
+  box-shadow: 0 8px 0 rgba(39, 48, 68, 0.08), 0 16px 36px rgba(39, 48, 68, 0.08);
 }
 
 .stack {
@@ -49,34 +59,41 @@ a:hover {
 
 .btn {
   border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 800;
   cursor: pointer;
-  background: #2141d4;
+  background: var(--duo-green);
   color: #ffffff;
+  box-shadow: inset 0 -3px 0 var(--duo-green-deep);
+}
+
+.btn:hover {
+  filter: brightness(0.98);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
 .btn-secondary {
-  background: #e9eefc;
-  color: #1b2f80;
+  background: #eef5ff;
+  color: #1f4f8a;
+  box-shadow: inset 0 -3px 0 #dce9ff;
 }
 
 .btn-outline {
   background: #ffffff;
-  color: #2448d8;
-  border: 1px solid #bcc8ef;
+  color: #198acb;
+  border: 2px solid #cae9fa;
+  box-shadow: inset 0 -3px 0 #eef8fe;
 }
 
 .muted {
   margin: 0;
-  color: #56607a;
+  color: var(--muted);
   font-size: 14px;
 }
 
@@ -84,60 +101,179 @@ a:hover {
   color: #b42318;
   font-size: 14px;
   margin: 0;
+  font-weight: 700;
 }
 
 .success {
   color: #067647;
   font-size: 14px;
   margin: 0;
+  font-weight: 700;
 }
 
 .input {
   width: 100%;
-  max-width: 380px;
-  border: 1px solid #c8d2e6;
-  border-radius: 10px;
-  padding: 10px 12px;
+  max-width: 420px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 16px;
+  color: var(--ink);
+  background: #ffffff;
+}
+
+.input:focus-visible {
+  outline: 3px solid #d6f7bd;
+  outline-offset: 2px;
+  border-color: #8fd95b;
+}
+
+.hero-title {
+  font-size: clamp(28px, 5vw, 40px);
+  margin: 0;
+  line-height: 1.12;
+}
+
+.hero-sub {
+  margin: 0;
+  color: var(--muted);
   font-size: 16px;
 }
 
+.hero-tag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  border: 2px solid #dff3ce;
+  background: var(--duo-green-soft);
+  color: #2f7a04;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 12px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 18px;
+  background: #edf3fc;
+  border-radius: 999px;
+  border: 2px solid #d9e2f2;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--duo-green), #7de53e);
+  transition: width 0.2s ease;
+}
+
+.question-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.question-card {
+  border: 2px solid #d9e2f2;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.question-card.answered {
+  border-color: #9cde6f;
+  background: #fcfffa;
+}
+
+.question-top {
+  display: flex;
+  gap: 10px;
+}
+
+.question-number {
+  min-width: 48px;
+  height: 30px;
+  border-radius: 999px;
+  background: #edf3fc;
+  color: #45608a;
+  font-weight: 800;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.question-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.choice-grid {
+  display: grid;
+  gap: 8px;
+}
+
 .choice {
-  display: block;
   width: 100%;
   text-align: left;
-  border: 1px solid #c8d2e6;
-  border-radius: 10px;
-  padding: 12px;
+  border: 2px solid #d9e2f2;
+  border-radius: 14px;
+  padding: 11px 12px;
   background: #ffffff;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
+  color: #344161;
+  font-weight: 700;
+}
+
+.choice:hover {
+  border-color: #c2d2ea;
 }
 
 .choice.selected {
-  border-color: #2448d8;
-  background: #eef2ff;
+  background: #eff9e8;
+  border-color: #9cde6f;
+  color: #2f7a04;
 }
 
 .result-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .result-table th,
 .result-table td {
-  border-bottom: 1px solid #e5eaf4;
+  border-bottom: 1px solid #e6edf9;
   padding: 10px 8px;
   text-align: left;
 }
 
+.result-table th {
+  background: #f5f8ff;
+}
+
+.result-table tr:last-child td {
+  border-bottom: none;
+}
+
 .result-table tr.highlight {
-  background: #eef2ff;
+  background: #f0fbe8;
 }
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .admin-table th,
@@ -150,9 +286,51 @@ a:hover {
 
 .badge {
   display: inline-flex;
-  border: 1px solid #c8d2e6;
+  border: 2px solid #dff3ce;
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #2f7a04;
+  background: var(--duo-green-soft);
+  width: fit-content;
+}
+
+.answers-details {
+  width: 100%;
+}
+
+.answers-details summary {
+  cursor: pointer;
+  color: #1e76b7;
+  font-weight: 700;
+}
+
+.answers-grid {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.answer-chip {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid #d0e6f7;
+  background: #f3faff;
+  color: #215f8f;
+  padding: 3px 8px;
   font-size: 12px;
 }
 
+@media (max-width: 700px) {
+  .card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}

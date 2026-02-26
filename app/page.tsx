@@ -4,8 +4,9 @@ export default function HomePage() {
   return (
     <main className="main">
       <section className="card stack">
-        <h1>愛着スタイル診断（45問）</h1>
-        <p className="muted">2択×45問への回答からA/B/C/Dスコアを算出します。</p>
+        <span className="hero-tag">DUO-LIKE UI</span>
+        <h1 className="hero-title">愛着スタイル診断（45問）</h1>
+        <p className="hero-sub">2択×45問への回答からA/B/C/Dスコアを算出します。</p>
 
         <div className="stack">
           <h2>免責</h2>
@@ -32,4 +33,3 @@ export default function HomePage() {
     </main>
   );
 }
-

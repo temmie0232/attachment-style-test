@@ -6,8 +6,6 @@ import questionsData from "@/data/questions.json";
 import { TOTAL_QUESTIONS } from "@/lib/constants";
 import { AnswerMap, Score, ScoreKey, labelForKey, rankScoreKeys, scoreAnswers } from "@/lib/scoring";
 
-type Phase = "name" | "questions" | "result";
-
 type Question = {
   id: number;
   question: string;
@@ -32,21 +30,19 @@ function strengthLabel(value: number): string {
 }
 
 export default function TestPage() {
-  const [phase, setPhase] = useState<Phase>("name");
   const [name, setName] = useState("");
   const [answers, setAnswers] = useState<AnswerMap>({});
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState<Score | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [message, setMessage] = useState<string>("");
 
   const trimmedName = name.trim();
-  const currentQuestion = questions[currentIndex];
   const answeredCount = questions.reduce((count, item) => {
     return answers[item.id] ? count + 1 : count;
   }, 0);
-  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
-  const canShowResult = answeredCount === TOTAL_QUESTIONS;
+  const unansweredCount = TOTAL_QUESTIONS - answeredCount;
+  const canShowResult = Boolean(trimmedName && answeredCount === TOTAL_QUESTIONS);
+  const progressPercent = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
 
   const rankedKeys = useMemo(() => {
     return score ? rankScoreKeys(score) : [];
@@ -57,35 +53,41 @@ export default function TestPage() {
   const maxScore = score ? score[primaryKey] : 0;
   const shouldShowSecondary = Boolean(score && secondaryKey && score[secondaryKey] >= 5);
 
-  const handleStart = () => {
-    if (!trimmedName) {
-      return;
-    }
-    setName(trimmedName);
-    setPhase("questions");
+  const clearResultState = () => {
+    setScore(null);
+    setSaveState("idle");
+  };
+
+  const handleNameChange = (value: string) => {
+    setName(value);
+    clearResultState();
     setMessage("");
   };
 
-  const handleChoose = (value: 1 | 2) => {
-    if (!currentQuestion) {
-      return;
-    }
-
+  const handleChoose = (questionId: number, value: 1 | 2) => {
     setAnswers((previous) => ({
       ...previous,
-      [currentQuestion.id]: value,
+      [questionId]: value,
     }));
+    clearResultState();
+    setMessage("");
   };
 
   const handleShowResult = () => {
+    if (!trimmedName) {
+      setMessage("名前を入力してください。");
+      return;
+    }
+
     if (!canShowResult) {
+      setMessage(`未回答が${unansweredCount}問あります。すべて回答してください。`);
       return;
     }
 
     try {
       const nextScore = scoreAnswers(answers);
+      setName(trimmedName);
       setScore(nextScore);
-      setPhase("result");
       setSaveState("idle");
       setMessage("");
     } catch (error) {
@@ -133,92 +135,79 @@ export default function TestPage() {
   return (
     <main className="main">
       <section className="card stack">
+        <span className="hero-tag">ONE-PAGE TEST</span>
         <h1>愛着スタイル診断（45問）</h1>
+        <p className="muted">1ページですべて回答できます。選択後に「次へ」は不要です。</p>
+        <p className="muted">保存されるため、本名ではなくニックネームの利用を推奨します。</p>
 
-        {phase === "name" && (
-          <div className="stack">
-            <label htmlFor="name">名前（ニックネーム推奨）</label>
-            <input
-              id="name"
-              className="input"
-              type="text"
-              value={name}
-              maxLength={60}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="例）みかん"
-            />
-            <p className="muted">保存されるため、本名ではなくニックネームの利用を推奨します。</p>
-            <div className="row">
-              <button className="btn" type="button" disabled={!trimmedName} onClick={handleStart}>
-                次へ
-              </button>
-              <Link className="btn btn-outline" href="/">
-                トップへ
-              </Link>
-            </div>
-          </div>
-        )}
+        <div className="stack">
+          <label htmlFor="name">名前（必須）</label>
+          <input
+            id="name"
+            className="input"
+            type="text"
+            value={name}
+            maxLength={60}
+            onChange={(event) => handleNameChange(event.target.value)}
+            placeholder="例）みかん"
+          />
+        </div>
 
-        {phase === "questions" && currentQuestion && (
-          <div className="stack">
-            <p className="muted">現在の設問: {currentQuestion.id} / {TOTAL_QUESTIONS}</p>
+        <div className="stack">
+          <div className="row">
             <p className="muted">回答済み: {answeredCount} / {TOTAL_QUESTIONS}</p>
-            <h2>{currentQuestion.question}</h2>
-
-            <div className="stack">
-              <button
-                type="button"
-                className={`choice ${currentAnswer === 1 ? "selected" : ""}`}
-                onClick={() => handleChoose(1)}
-              >
-                {currentQuestion.answer1}
-              </button>
-              <button
-                type="button"
-                className={`choice ${currentAnswer === 2 ? "selected" : ""}`}
-                onClick={() => handleChoose(2)}
-              >
-                {currentQuestion.answer2}
-              </button>
-            </div>
-
-            <div className="row">
-              <button
-                className="btn btn-secondary"
-                type="button"
-                onClick={() => setCurrentIndex((index) => Math.max(0, index - 1))}
-                disabled={currentIndex === 0}
-              >
-                戻る
-              </button>
-
-              {currentIndex < TOTAL_QUESTIONS - 1 ? (
-                <button
-                  className="btn"
-                  type="button"
-                  disabled={currentAnswer === undefined}
-                  onClick={() =>
-                    setCurrentIndex((index) => Math.min(TOTAL_QUESTIONS - 1, index + 1))
-                  }
-                >
-                  次へ
-                </button>
-              ) : (
-                <button
-                  className="btn"
-                  type="button"
-                  disabled={!canShowResult}
-                  onClick={handleShowResult}
-                >
-                  結果を見る
-                </button>
-              )}
-            </div>
+            <p className="muted">進捗: {progressPercent}%</p>
           </div>
-        )}
+          <div className="progress-track" aria-label="回答進捗">
+            <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
 
-        {phase === "result" && score && (
-          <div className="stack">
+        <div className="question-list">
+          {questions.map((question) => {
+            const selectedAnswer = answers[question.id];
+            return (
+              <article
+                key={question.id}
+                className={`question-card ${selectedAnswer === 1 || selectedAnswer === 2 ? "answered" : ""}`}
+              >
+                <div className="question-top">
+                  <span className="question-number">Q{question.id}</span>
+                  <p className="question-text">{question.question}</p>
+                </div>
+
+                <div className="choice-grid">
+                  <button
+                    type="button"
+                    className={`choice ${selectedAnswer === 1 ? "selected" : ""}`}
+                    onClick={() => handleChoose(question.id, 1)}
+                  >
+                    {question.answer1}
+                  </button>
+                  <button
+                    type="button"
+                    className={`choice ${selectedAnswer === 2 ? "selected" : ""}`}
+                    onClick={() => handleChoose(question.id, 2)}
+                  >
+                    {question.answer2}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="row">
+          <button className="btn" type="button" disabled={!canShowResult} onClick={handleShowResult}>
+            結果を見る
+          </button>
+          <Link className="btn btn-outline" href="/">
+            トップへ
+          </Link>
+        </div>
+
+        {score && (
+          <div className="stack card">
             <p className="badge">{trimmedName} さんの結果</p>
             <p>
               基本傾向：<strong>{labelForKey(primaryKey)}</strong>
@@ -250,15 +239,13 @@ export default function TestPage() {
             </table>
 
             <div className="row">
-              <button className="btn" type="button" disabled={saveState !== "idle"} onClick={handleSave}>
-                {saveState === "saved" ? "保存済み" : saveState === "saving" ? "保存中..." : "結果を保存する"}
-              </button>
               <button
-                className="btn btn-secondary"
+                className="btn"
                 type="button"
-                onClick={() => setPhase("questions")}
+                disabled={saveState !== "idle"}
+                onClick={handleSave}
               >
-                回答へ戻る
+                {saveState === "saved" ? "保存済み" : saveState === "saving" ? "保存中..." : "結果を保存する"}
               </button>
               <Link className="btn btn-outline" href="/">
                 トップへ

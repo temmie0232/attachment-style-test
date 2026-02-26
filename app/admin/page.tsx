@@ -1,4 +1,11 @@
 import { sql } from "@vercel/postgres";
+import questionsData from "@/data/questions.json";
+
+type Question = {
+  id: number;
+  answer1: string;
+  answer2: string;
+};
 
 type SubmissionRow = {
   id: string;
@@ -10,13 +17,33 @@ type SubmissionRow = {
     scC?: number;
     scD?: number;
   } | null;
+  answers: Record<string, number> | null;
 };
 
 export const dynamic = "force-dynamic";
+const questions = questionsData as Question[];
+const questionById = new Map(questions.map((item) => [item.id, item]));
+
+function answerLabel(questionId: number, selectedValue: number | undefined): string {
+  const question = questionById.get(questionId);
+  if (!question) {
+    return selectedValue === 1 || selectedValue === 2 ? `選択肢${selectedValue}` : "未回答";
+  }
+
+  if (selectedValue === 1) {
+    return question.answer1;
+  }
+
+  if (selectedValue === 2) {
+    return question.answer2;
+  }
+
+  return "未回答";
+}
 
 async function getSubmissions() {
   const result = await sql<SubmissionRow>`
-    SELECT id, name, score, created_at
+    SELECT id, name, score, answers, created_at
     FROM attachment_submissions
     ORDER BY created_at DESC
     LIMIT 200
@@ -44,13 +71,14 @@ export default async function AdminPage() {
                 <th>B</th>
                 <th>C</th>
                 <th>D</th>
+                <th>回答詳細</th>
                 <th>id</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={7}>データはまだありません。</td>
+                  <td colSpan={8}>データはまだありません。</td>
                 </tr>
               )}
               {rows.map((row) => (
@@ -61,6 +89,18 @@ export default async function AdminPage() {
                   <td>{row.score?.scB ?? 0}</td>
                   <td>{row.score?.scC ?? 0}</td>
                   <td>{row.score?.scD ?? 0}</td>
+                  <td>
+                    <details className="answers-details">
+                      <summary>回答を見る</summary>
+                      <div className="answers-grid">
+                        {questions.map((question) => (
+                          <span className="answer-chip" key={`${row.id}-${question.id}`}>
+                            Q{question.id}:{answerLabel(question.id, row.answers?.[String(question.id)])}
+                          </span>
+                        ))}
+                      </div>
+                    </details>
+                  </td>
                   <td>{row.id}</td>
                 </tr>
               ))}
@@ -80,4 +120,3 @@ export default async function AdminPage() {
     );
   }
 }
-
