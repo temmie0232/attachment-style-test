@@ -5,15 +5,15 @@ export default function HomePage() {
     <main className="main">
       <section className="card stack">
         <span className="hero-tag">DUO-LIKE UI</span>
-        <h1 className="hero-title">愛着スタイル診断（45問）</h1>
+        <h1 className="hero-title">愛着スタイル診断</h1>
         <p className="hero-sub">2択×45問への回答からA/B/C/Dスコアを算出します。</p>
 
         <div className="stack">
-          <h2>免責</h2>
-          <ul>
-            <li>この診断は自己理解の参考であり、医療診断ではありません。</li>
-            <li>困りごとが強い場合は、医療・心理の専門家へ相談してください。</li>
-          </ul>
+          <h2>愛着障害とは</h2>
+          <p className="muted">
+            愛着障害（愛着の問題）は、人との距離感や信頼の持ち方に強い偏りが出て、
+            対人関係で困りやすくなる状態を指します。大人では「不安になりやすい」「近づきたいのに避ける」といった形で現れることがあります。
+          </p>
         </div>
 
         <div className="row">

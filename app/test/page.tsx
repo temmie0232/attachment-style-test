@@ -15,6 +15,8 @@ type Question = {
 
 const questions = questionsData as Question[];
 const SCORE_ORDER: ScoreKey[] = ["scA", "scB", "scC", "scD"];
+const RESULT_TRIGGER_ID = "result-trigger";
+const questionIndexById = new Map(questions.map((question, index) => [question.id, index]));
 
 function strengthLabel(value: number): string {
   if (value >= 15) {
@@ -65,6 +67,20 @@ export default function TestPage() {
     }));
     clearResultState();
     setMessage("");
+
+    const currentIndex = questionIndexById.get(questionId);
+    if (currentIndex === undefined) {
+      return;
+    }
+
+    const nextQuestion = questions[currentIndex + 1];
+    const nextTargetId = nextQuestion ? `question-${nextQuestion.id}` : RESULT_TRIGGER_ID;
+    window.requestAnimationFrame(() => {
+      document.getElementById(nextTargetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
   };
 
   const handleShowResult = async () => {
@@ -137,6 +153,7 @@ export default function TestPage() {
             return (
               <article
                 key={question.id}
+                id={`question-${question.id}`}
                 className={`question-card ${selectedAnswer === 1 || selectedAnswer === 2 ? "answered" : ""}`}
               >
                 <div className="question-top">
@@ -165,7 +182,7 @@ export default function TestPage() {
           })}
         </div>
 
-        <div className="row">
+        <div id={RESULT_TRIGGER_ID} className="row">
           <button
             className="btn"
             type="button"
