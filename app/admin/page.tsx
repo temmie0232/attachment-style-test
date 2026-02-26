@@ -2,6 +2,7 @@ import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import questionsData from "@/data/questions.json";
+import { ensureSubmissionsSchema } from "@/lib/submissions-schema";
 
 type Question = {
   id: number;
@@ -48,6 +49,8 @@ function answerLabel(questionId: number, selectedValue: number | undefined): str
 }
 
 async function getSubmissions() {
+  await ensureSubmissionsSchema();
+
   const result = await sql<SubmissionRow>`
     SELECT id, name, score, answers, created_at, viewed_at, viewed_period
     FROM attachment_submissions
@@ -60,6 +63,8 @@ async function getSubmissions() {
 
 async function deleteSubmission(formData: FormData) {
   "use server";
+
+  await ensureSubmissionsSchema();
 
   const parsed = idSchema.safeParse(formData.get("id"));
   if (!parsed.success) {

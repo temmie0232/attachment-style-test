@@ -3,6 +3,7 @@ import { sql } from "@vercel/postgres";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { Score, ScoreKey, labelForKey, rankScoreKeys } from "@/lib/scoring";
+import { ensureSubmissionsSchema } from "@/lib/submissions-schema";
 
 type SubmissionRow = {
   id: string;
@@ -63,6 +64,8 @@ function adviceForD(score: Score): string {
 }
 
 async function getSubmission(id: string): Promise<SubmissionRow | null> {
+  await ensureSubmissionsSchema();
+
   const result = await sql<SubmissionRow>`
     SELECT id, name, score, viewed_at, viewed_period
     FROM attachment_submissions

@@ -3,6 +3,7 @@ import { sql } from "@vercel/postgres";
 import { z } from "zod";
 import { TOTAL_QUESTIONS } from "@/lib/constants";
 import { normalizeAnswers, scoreAnswers } from "@/lib/scoring";
+import { ensureSubmissionsSchema } from "@/lib/submissions-schema";
 
 const payloadSchema = z.object({
   name: z
@@ -43,6 +44,8 @@ function viewedPeriodForDate(date: Date): string {
 
 export async function POST(request: Request) {
   try {
+    await ensureSubmissionsSchema();
+
     const json = await request.json();
     const parsed = payloadSchema.safeParse(json);
 
