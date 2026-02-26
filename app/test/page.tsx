@@ -30,19 +30,19 @@ function strengthLabel(value: number): string {
 }
 
 export default function TestPage() {
-  const [name, setName] = useState("");
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [score, setScore] = useState<Score | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSavedSignature, setLastSavedSignature] = useState("");
   const [message, setMessage] = useState<string>("");
 
-  const trimmedName = name.trim();
+  const submissionName = "匿名";
   const answeredCount = questions.reduce((count, item) => {
     return answers[item.id] ? count + 1 : count;
   }, 0);
   const unansweredCount = TOTAL_QUESTIONS - answeredCount;
-  const canShowResult = Boolean(trimmedName && answeredCount === TOTAL_QUESTIONS);
-  const progressPercent = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
+  const canShowResult = answeredCount === TOTAL_QUESTIONS;
+  const answerSignature = questions.map((question) => answers[question.id] ?? 0).join("");
 
   const rankedKeys = useMemo(() => {
     return score ? rankScoreKeys(score) : [];
@@ -58,12 +58,6 @@ export default function TestPage() {
     setSaveState("idle");
   };
 
-  const handleNameChange = (value: string) => {
-    setName(value);
-    clearResultState();
-    setMessage("");
-  };
-
   const handleChoose = (questionId: number, value: 1 | 2) => {
     setAnswers((previous) => ({
       ...previous,
@@ -73,35 +67,32 @@ export default function TestPage() {
     setMessage("");
   };
 
-  const handleShowResult = () => {
-    if (!trimmedName) {
-      setMessage("名前を入力してください。");
-      return;
-    }
-
+  const handleShowResult = async () => {
     if (!canShowResult) {
+      setSaveState("idle");
       setMessage(`未回答が${unansweredCount}問あります。すべて回答してください。`);
       return;
     }
 
+    let nextScore: Score;
     try {
-      const nextScore = scoreAnswers(answers);
-      setName(trimmedName);
-      setScore(nextScore);
-      setSaveState("idle");
-      setMessage("");
+      nextScore = scoreAnswers(answers);
     } catch (error) {
+      setSaveState("idle");
       setMessage(error instanceof Error ? error.message : "採点に失敗しました。");
+      return;
     }
-  };
 
-  const handleSave = async () => {
-    if (!score || saveState !== "idle") {
+    setScore(nextScore);
+
+    if (lastSavedSignature === answerSignature) {
+      setSaveState("saved");
+      setMessage("結果を表示しました（この回答は保存済みです）。");
       return;
     }
 
     setSaveState("saving");
-    setMessage("");
+    setMessage("結果を計算して保存中です...");
 
     try {
       const response = await fetch("/api/submit", {
@@ -110,7 +101,7 @@ export default function TestPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: trimmedName,
+          name: submissionName,
           answers,
         }),
       });
@@ -125,43 +116,20 @@ export default function TestPage() {
       }
 
       setSaveState("saved");
-      setMessage("保存済みです。");
+      setLastSavedSignature(answerSignature);
+      setMessage("結果を表示し、保存しました。");
     } catch (error) {
       setSaveState("idle");
       setMessage(error instanceof Error ? error.message : "保存に失敗しました。");
     }
   };
 
+  const statusMessageClass = saveState === "saved" ? "success" : "error";
+
   return (
     <main className="main">
       <section className="card stack">
-        <span className="hero-tag">ONE-PAGE TEST</span>
-        <h1>愛着スタイル診断（45問）</h1>
-        <p className="muted">1ページですべて回答できます。選択後に「次へ」は不要です。</p>
-        <p className="muted">保存されるため、本名ではなくニックネームの利用を推奨します。</p>
-
-        <div className="stack">
-          <label htmlFor="name">名前（必須）</label>
-          <input
-            id="name"
-            className="input"
-            type="text"
-            value={name}
-            maxLength={60}
-            onChange={(event) => handleNameChange(event.target.value)}
-            placeholder="例）みかん"
-          />
-        </div>
-
-        <div className="stack">
-          <div className="row">
-            <p className="muted">回答済み: {answeredCount} / {TOTAL_QUESTIONS}</p>
-            <p className="muted">進捗: {progressPercent}%</p>
-          </div>
-          <div className="progress-track" aria-label="回答進捗">
-            <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </div>
+        <h1>愛着スタイル診断</h1>
 
         <div className="question-list">
           {questions.map((question) => {
@@ -198,8 +166,13 @@ export default function TestPage() {
         </div>
 
         <div className="row">
-          <button className="btn" type="button" disabled={!canShowResult} onClick={handleShowResult}>
-            結果を見る
+          <button
+            className="btn"
+            type="button"
+            disabled={!canShowResult || saveState === "saving"}
+            onClick={handleShowResult}
+          >
+            {saveState === "saving" ? "保存中..." : "結果を見る"}
           </button>
           <Link className="btn btn-outline" href="/">
             トップへ
@@ -208,7 +181,7 @@ export default function TestPage() {
 
         {score && (
           <div className="stack card">
-            <p className="badge">{trimmedName} さんの結果</p>
+            <p className="badge">診断結果</p>
             <p>
               基本傾向：<strong>{labelForKey(primaryKey)}</strong>
             </p>
@@ -239,14 +212,6 @@ export default function TestPage() {
             </table>
 
             <div className="row">
-              <button
-                className="btn"
-                type="button"
-                disabled={saveState !== "idle"}
-                onClick={handleSave}
-              >
-                {saveState === "saved" ? "保存済み" : saveState === "saving" ? "保存中..." : "結果を保存する"}
-              </button>
               <Link className="btn btn-outline" href="/">
                 トップへ
               </Link>
@@ -254,7 +219,7 @@ export default function TestPage() {
           </div>
         )}
 
-        {message && <p className={saveState === "saved" ? "success" : "error"}>{message}</p>}
+        {message && <p className={statusMessageClass}>{message}</p>}
       </section>
     </main>
   );

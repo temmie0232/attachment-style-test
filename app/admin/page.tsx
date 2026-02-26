@@ -1,8 +1,11 @@
 import { sql } from "@vercel/postgres";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import questionsData from "@/data/questions.json";
 
 type Question = {
   id: number;
+  question: string;
   answer1: string;
   answer2: string;
 };
@@ -23,6 +26,7 @@ type SubmissionRow = {
 export const dynamic = "force-dynamic";
 const questions = questionsData as Question[];
 const questionById = new Map(questions.map((item) => [item.id, item]));
+const idSchema = z.string().uuid();
 
 function answerLabel(questionId: number, selectedValue: number | undefined): string {
   const question = questionById.get(questionId);
@@ -52,6 +56,22 @@ async function getSubmissions() {
   return result.rows;
 }
 
+async function deleteSubmission(formData: FormData) {
+  "use server";
+
+  const parsed = idSchema.safeParse(formData.get("id"));
+  if (!parsed.success) {
+    return;
+  }
+
+  await sql`
+    DELETE FROM attachment_submissions
+    WHERE id = ${parsed.data}
+  `;
+
+  revalidatePath("/admin");
+}
+
 export default async function AdminPage() {
   try {
     const rows = await getSubmissions();
@@ -72,13 +92,14 @@ export default async function AdminPage() {
                 <th>C</th>
                 <th>D</th>
                 <th>回答詳細</th>
+                <th>操作</th>
                 <th>id</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={8}>データはまだありません。</td>
+                  <td colSpan={9}>データはまだありません。</td>
                 </tr>
               )}
               {rows.map((row) => (
@@ -92,14 +113,25 @@ export default async function AdminPage() {
                   <td>
                     <details className="answers-details">
                       <summary>回答を見る</summary>
-                      <div className="answers-grid">
+                      <div className="answers-list">
                         {questions.map((question) => (
-                          <span className="answer-chip" key={`${row.id}-${question.id}`}>
-                            Q{question.id}:{answerLabel(question.id, row.answers?.[String(question.id)])}
-                          </span>
+                          <article className="answer-item" key={`${row.id}-${question.id}`}>
+                            <p className="answer-item-head">
+                              Q{question.id}：{answerLabel(question.id, row.answers?.[String(question.id)])}
+                            </p>
+                            <p className="answer-item-question">{question.question}</p>
+                          </article>
                         ))}
                       </div>
                     </details>
+                  </td>
+                  <td>
+                    <form action={deleteSubmission}>
+                      <input type="hidden" name="id" value={row.id} />
+                      <button className="btn btn-danger btn-small btn-inline" type="submit">
+                        削除
+                      </button>
+                    </form>
                   </td>
                   <td>{row.id}</td>
                 </tr>
