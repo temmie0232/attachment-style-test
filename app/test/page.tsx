@@ -30,6 +30,7 @@ export default function TestPage() {
   }, 0);
   const unansweredCount = TOTAL_QUESTIONS - answeredCount;
   const canShowResult = answeredCount === TOTAL_QUESTIONS;
+  const progressPercent = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
 
   const handleChoose = (questionId: number, value: 1 | 2) => {
     setAnswers((previous) => ({
@@ -96,6 +97,17 @@ export default function TestPage() {
     <main className="main">
       <section className="card stack">
         <h1 className="test-title">愛着スタイル診断</h1>
+        <div className="progress-panel">
+          <div className="progress-top">
+            <p className="progress-label">回答進捗</p>
+            <p className="progress-count">
+              {answeredCount}/{TOTAL_QUESTIONS}（{progressPercent}%）
+            </p>
+          </div>
+          <div className="progress-track" aria-hidden="true">
+            <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
 
         <div className="question-list">
           {questions.map((question) => {
