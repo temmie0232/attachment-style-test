@@ -95,7 +95,7 @@ export default function TestPage() {
   return (
     <main className="main">
       <section className="card stack">
-        <h1>愛着スタイル診断</h1>
+        <h1 className="test-title">愛着スタイル診断</h1>
 
         <div className="question-list">
           {questions.map((question) => {
