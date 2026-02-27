@@ -262,6 +262,20 @@ a:hover {
   color: #2f7a04;
 }
 
+.result-card {
+  text-align: center;
+}
+
+.result-card .row {
+  justify-content: center;
+}
+
+.result-trend {
+  margin: 0;
+  font-size: clamp(19px, 3.4vw, 24px);
+  font-weight: 800;
+}
+
 .result-table {
   width: 100%;
   border-collapse: separate;
@@ -276,6 +290,11 @@ a:hover {
   border-bottom: 1px solid #e6edf9;
   padding: 10px 8px;
   text-align: left;
+}
+
+.result-card .result-table th,
+.result-card .result-table td {
+  text-align: center;
 }
 
 .result-table th {

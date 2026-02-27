@@ -101,21 +101,20 @@ export default async function ResultPage({
 
   return (
     <main className="main">
-      <section className="card stack">
+      <section className="card stack result-card">
         <h1>診断結果</h1>
         <p className="badge">{row.name} の結果</p>
         <p className="muted">
           表示日時: {formatDateTimeJst(row.viewed_at)}（時間帯: {row.viewed_period}）
         </p>
-
-        <p>
+        <p className="result-trend">
           基本傾向：<strong>{labelForKey(primary)}</strong>
         </p>
         <p className="muted">{TYPE_COMMENTARY[primary]}</p>
 
         {showSecondary && secondary && (
           <>
-            <p>
+            <p className="result-trend">
               副傾向：<strong>{labelForKey(secondary)}</strong>（{score[secondary]}点）
             </p>
             <p className="muted">{TYPE_COMMENTARY[secondary]}</p>
